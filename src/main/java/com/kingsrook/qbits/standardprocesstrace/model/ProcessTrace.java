@@ -24,6 +24,9 @@ package com.kingsrook.qbits.standardprocesstrace.model;
 
 import java.time.Instant;
 import java.util.List;
+import com.kingsrook.qbits.standardprocesstrace.metadata.ProcessTraceBackendActivityStatsMetaDataProducer;
+import com.kingsrook.qbits.standardprocesstrace.metadata.ProcessTraceJoinBackendActivityStatsMetaDataProducer;
+import com.kingsrook.qbits.standardprocesstrace.metadata.ProcessTraceJoinBackendActivityStatsWidgetMetaDataProducer;
 import com.kingsrook.qbits.standardprocesstrace.metadata.ProcessTraceJoinKeyRecordQQQTableMetaDataProducer;
 import com.kingsrook.qbits.standardprocesstrace.metadata.ProcessTraceJoinQQQProcessMetaDataProducer;
 import com.kingsrook.qbits.standardprocesstrace.utils.ProcessTraceTableCustomizer;
@@ -66,7 +69,7 @@ import com.kingsrook.qqq.backend.core.model.tables.QQQTable;
          childTableEntityClass = ProcessTraceSummaryLine.class,
          joinFieldName = "processTraceSummaryLineId",
          childJoin = @ChildJoin(enabled = true),
-         childRecordListWidget = @ChildRecordListWidget(label = "Summary Lines", enabled = true, maxRows = 250))
+         childRecordListWidget = @ChildRecordListWidget(label = "Summary Lines", enabled = true, maxRows = 250)),
    }
 )
 public class ProcessTrace extends QRecordEntity
@@ -87,7 +90,7 @@ public class ProcessTrace extends QRecordEntity
       @Override
       public QTableMetaData customizeMetaData(QInstance qInstance, QTableMetaData table) throws QException
       {
-         String childJoinName = QJoinMetaData.makeInferredJoinName(TABLE_NAME, ProcessTraceSummaryLine.TABLE_NAME);
+         String summaryLinesChildJoinName = QJoinMetaData.makeInferredJoinName(TABLE_NAME, ProcessTraceSummaryLine.TABLE_NAME);
 
          table
             .withUniqueKey(new UniqueKey("processUUID"))
@@ -96,13 +99,24 @@ public class ProcessTrace extends QRecordEntity
             .withRecordLabelFields("qqqProcessId", "processUUID")
             .withSection(new QFieldSection("identity", new QIcon().withName("badge"), Tier.T1, List.of("id", "qqqProcessId", "processUUID", "userId")))
             .withSection(new QFieldSection("data", new QIcon().withName("text_snippet"), Tier.T2, List.of("startTimestamp", "endTimestamp", "runtimeMillis", "keyRecordQqqTableId", "keyRecordId", "recordCount", "exceptionMessage")))
-            .withSection(new QFieldSection("summaryLines", new QIcon().withName("horizontal_rule"), Tier.T2).withWidgetName(childJoinName))
-            .withExposedJoin(new ExposedJoin().withLabel("Summary Lines").withJoinPath(List.of(childJoinName)).withJoinTable(ProcessTraceSummaryLine.TABLE_NAME))
+            .withSection(new QFieldSection("summaryLines", new QIcon().withName("horizontal_rule"), Tier.T2).withWidgetName(summaryLinesChildJoinName))
+            .withExposedJoin(new ExposedJoin().withLabel("Summary Lines").withJoinPath(List.of(summaryLinesChildJoinName)).withJoinTable(ProcessTraceSummaryLine.TABLE_NAME))
             .withExposedJoin(new ExposedJoin().withLabel("Key Record Table").withJoinPath(List.of(ProcessTraceJoinKeyRecordQQQTableMetaDataProducer.NAME)).withJoinTable(QQQTable.TABLE_NAME))
             .withExposedJoin(new ExposedJoin().withLabel("Process").withJoinPath(List.of(ProcessTraceJoinQQQProcessMetaDataProducer.NAME)).withJoinTable(QQQProcess.TABLE_NAME));
 
          table.withCustomizer(TableCustomizers.POST_QUERY_RECORD, new QCodeReference(ProcessTraceTableCustomizer.class));
          table.getField("keyRecordId").withFieldAdornment(new FieldAdornment(AdornmentType.LINK).withValue(AdornmentType.LinkValues.TO_RECORD_FROM_TABLE_DYNAMIC, true));
+
+         if(new ProcessTraceBackendActivityStatsMetaDataProducer().isEnabled())
+         {
+            table.getSections().add(new QFieldSection("backendActivityStats", new QIcon().withName("query_stats"), Tier.T2)
+               .withWidgetName(ProcessTraceJoinBackendActivityStatsWidgetMetaDataProducer.NAME));
+
+            table.withExposedJoin(new ExposedJoin()
+               .withLabel("Backend Activity Stats")
+               .withJoinPath(List.of(ProcessTraceJoinBackendActivityStatsMetaDataProducer.NAME))
+               .withJoinTable(ProcessTraceBackendActivityStats.TABLE_NAME));
+         }
 
          return (table);
       }

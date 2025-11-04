@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import com.kingsrook.qbits.standardprocesstrace.StandardProcessTraceQBitConfig;
 import com.kingsrook.qbits.standardprocesstrace.model.ProcessTrace;
+import com.kingsrook.qbits.standardprocesstrace.model.ProcessTraceBackendActivityStats;
 import com.kingsrook.qbits.standardprocesstrace.model.ProcessTraceSummaryLine;
 import com.kingsrook.qbits.standardprocesstrace.model.ProcessTraceSummaryLineRecordInt;
 import com.kingsrook.qqq.backend.core.actions.tables.GetAction;
@@ -75,6 +76,8 @@ public class StandardProcessTracer implements ProcessTracerInterface
 
    private static StandardProcessTraceQBitConfig standardProcessTraceQBitConfig;
 
+   public static final String PROCESS_TRACE_ID_SESSION_KEY = StandardProcessTracer.class.getName() + ".processTraceId";
+
    private Instant startTime;
    private Long    processTraceId;
 
@@ -98,6 +101,17 @@ public class StandardProcessTracer implements ProcessTracerInterface
             .withProcessUUID(runProcessInput.getProcessUUID())));
 
          processTraceId = insertOutput.getRecords().get(0).getValueLong("id");
+
+         ////////////////////////////////////////////////////////////////////////////////////
+         // store the processTraceId in the session.  this will be used by the             //
+         // ProcessTraceQueryStatConsumer to associated QueryStats with this process trace //
+         ////////////////////////////////////////////////////////////////////////////////////
+         if(QContext.getQSession() != null)
+         {
+            QContext.getQSession().setValue(PROCESS_TRACE_ID_SESSION_KEY, String.valueOf(processTraceId));
+         }
+
+         ProcessTraceBackendActivityStatsManager.getInstance().initProcess(processTraceId);
       }
       catch(QException e)
       {
@@ -113,9 +127,29 @@ public class StandardProcessTracer implements ProcessTracerInterface
    @Override
    public void handleProcessResume(RunProcessInput runProcessInput)
    {
-      /////////////////////////////////
-      // noop in this implementation //
-      /////////////////////////////////
+      try
+      {
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // if a user is resuming a process, e.g., from a frontend, then we want to put that processTraceId in their session //
+         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         if(processTraceId == null)
+         {
+            QRecord processTrace = GetAction.execute(ProcessTrace.TABLE_NAME, Map.of("processUUID", runProcessInput.getProcessUUID()));
+            if(processTrace != null)
+            {
+               processTraceId = processTrace.getValueLong("id");
+            }
+         }
+
+         if(processTraceId != null && QContext.getQSession() != null)
+         {
+            QContext.getQSession().setValue(PROCESS_TRACE_ID_SESSION_KEY, String.valueOf(processTraceId));
+         }
+      }
+      catch(Exception e)
+      {
+         LOG.warn("Error resuming process trace", e, logPair("processUUID", () -> runProcessInput.getProcessUUID()));
+      }
    }
 
 
@@ -328,11 +362,27 @@ public class StandardProcessTracer implements ProcessTracerInterface
 
                new InsertAction().execute(new InsertInput(ProcessTraceSummaryLine.TABLE_NAME).withRecordEntities(summaryLines));
             }
+
+            //////////////////////////////////////////
+            // build and store backend stat records //
+            //////////////////////////////////////////
+            if(QContext.getQInstance().getTable(ProcessTraceBackendActivityStats.TABLE_NAME) != null)
+            {
+               List<ProcessTraceBackendActivityStats> stats = ProcessTraceBackendActivityStatsManager.getInstance().getAndRemoveStats(processTraceId);
+               new InsertAction().execute(new InsertInput(ProcessTraceBackendActivityStats.TABLE_NAME).withRecordEntities(stats));
+            }
          }
       }
       catch(Exception e)
       {
          LOG.warn("Error completing store of processTrace records.", e);
+      }
+      finally
+      {
+         if(QContext.getQSession() != null)
+         {
+            QContext.getQSession().removeValue(PROCESS_TRACE_ID_SESSION_KEY);
+         }
       }
    }
 
