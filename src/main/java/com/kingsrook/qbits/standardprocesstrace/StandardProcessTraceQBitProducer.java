@@ -23,15 +23,15 @@ package com.kingsrook.qbits.standardprocesstrace;
 
 
 import com.kingsrook.qbits.standardprocesstrace.model.ProcessTrace;
+import com.kingsrook.qbits.standardprocesstrace.model.ProcessTraceBackendActivityStats;
 import com.kingsrook.qbits.standardprocesstrace.model.ProcessTraceSummaryLine;
 import com.kingsrook.qbits.standardprocesstrace.model.ProcessTraceSummaryLineRecordInt;
 import com.kingsrook.qqq.backend.core.exceptions.QException;
-import com.kingsrook.qqq.backend.core.model.metadata.MetaDataProducerHelper;
-import com.kingsrook.qqq.backend.core.model.metadata.MetaDataProducerInterface;
 import com.kingsrook.qqq.backend.core.model.metadata.MetaDataProducerMultiOutput;
 import com.kingsrook.qqq.backend.core.model.metadata.QInstance;
 import com.kingsrook.qqq.backend.core.model.metadata.layout.QAppSection;
-import com.kingsrook.qqq.backend.core.model.metadata.producers.MetaDataCustomizerInterface;
+import com.kingsrook.qqq.backend.core.model.metadata.qbits.QBitMetaData;
+import com.kingsrook.qqq.backend.core.model.metadata.qbits.QBitMetaDataProducer;
 import com.kingsrook.qqq.backend.core.model.metadata.tables.QTableMetaData;
 import com.kingsrook.qqq.backend.core.utils.StringUtils;
 
@@ -39,10 +39,9 @@ import com.kingsrook.qqq.backend.core.utils.StringUtils;
 /*******************************************************************************
  **
  *******************************************************************************/
-public class StandardProcessTraceQBitProducer implements MetaDataProducerInterface<MetaDataProducerMultiOutput>
+public class StandardProcessTraceQBitProducer implements QBitMetaDataProducer<StandardProcessTraceQBitConfig>
 {
-   private StandardProcessTraceQBitConfig              standardProcessTraceQBitConfig;
-   private MetaDataCustomizerInterface<QTableMetaData> tableMetaDataCustomizer;
+   private StandardProcessTraceQBitConfig standardProcessTraceQBitConfig;
 
 
 
@@ -51,35 +50,71 @@ public class StandardProcessTraceQBitProducer implements MetaDataProducerInterfa
     ***************************************************************************/
    public static QAppSection getAppSection(QInstance qInstance)
    {
-      return (new QAppSection().withName("processTrace")
+      QBitMetaData qBitMetaData = qInstance.getQBits().get(new StandardProcessTraceQBitProducer().getQBitMetaData().getName());
+
+      QAppSection section = new QAppSection().withName("processTrace")
          .withTable(ProcessTrace.TABLE_NAME)
          .withTable(ProcessTraceSummaryLine.TABLE_NAME)
-         .withTable(ProcessTraceSummaryLineRecordInt.TABLE_NAME));
+         .withTable(ProcessTraceSummaryLineRecordInt.TABLE_NAME);
+
+      if(qBitMetaData != null && qBitMetaData.getConfig() instanceof StandardProcessTraceQBitConfig config)
+      {
+         if(config.getIncludeBackendActivityStats())
+         {
+            section.withTable(ProcessTraceBackendActivityStats.TABLE_NAME);
+         }
+      }
+
+      return (section);
    }
 
 
 
    /***************************************************************************
-    **
+    *
     ***************************************************************************/
    @Override
-   public MetaDataProducerMultiOutput produce(QInstance qInstance) throws QException
+   public StandardProcessTraceQBitConfig getQBitConfig()
    {
-      MetaDataProducerHelper.processAllMetaDataProducersInPackage(qInstance, ProcessTrace.class.getPackageName(), tableMetaDataCustomizer);
-      MetaDataProducerHelper.processAllMetaDataProducersInPackage(qInstance, getClass().getPackageName() + ".metadata", tableMetaDataCustomizer);
+      return (standardProcessTraceQBitConfig);
+   }
 
-      //////////////////////////////////////////////////////////////////////////////////////
-      // set the possible value source on the processTrace.userId field, if so configured //
-      //////////////////////////////////////////////////////////////////////////////////////
-      if(standardProcessTraceQBitConfig != null && StringUtils.hasContent(standardProcessTraceQBitConfig.getUserIdPossibleValueSourceName()))
+
+
+   /***************************************************************************
+    *
+    ***************************************************************************/
+   @Override
+   public QBitMetaData getQBitMetaData()
+   {
+      QBitMetaData qBitMetaData = new QBitMetaData()
+         .withGroupId("com.kingsrook.qbits")
+         .withArtifactId("standard-process-trace")
+         .withVersion("0.1.3")
+         .withNamespace(getNamespace())
+         .withConfig(getQBitConfig());
+
+      return qBitMetaData;
+   }
+
+
+
+   /***************************************************************************
+    *
+    ***************************************************************************/
+   @Override
+   public void postProduceActions(MetaDataProducerMultiOutput metaDataProducerMultiOutput, QInstance qInstance) throws QException
+   {
+      if(standardProcessTraceQBitConfig != null)
       {
-         qInstance.getTable(ProcessTrace.TABLE_NAME).getField("userId").setPossibleValueSourceName(standardProcessTraceQBitConfig.getUserIdPossibleValueSourceName());
+         //////////////////////////////////////////////////////////////////////////////////////
+         // set the possible value source on the processTrace.userId field, if so configured //
+         //////////////////////////////////////////////////////////////////////////////////////
+         if(StringUtils.hasContent(standardProcessTraceQBitConfig.getUserIdPossibleValueSourceName()))
+         {
+            metaDataProducerMultiOutput.get(QTableMetaData.class, ProcessTrace.TABLE_NAME).getField("userId").setPossibleValueSourceName(standardProcessTraceQBitConfig.getUserIdPossibleValueSourceName());
+         }
       }
-
-      ////////////////////////////////////////////////////////////////////////////////////////////////////
-      // we actually called MetaDataProducerHelper ourselves, so, don't have anything to return here... //
-      ////////////////////////////////////////////////////////////////////////////////////////////////////
-      return new MetaDataProducerMultiOutput();
    }
 
 
@@ -110,37 +145,6 @@ public class StandardProcessTraceQBitProducer implements MetaDataProducerInterfa
    public StandardProcessTraceQBitProducer withStandardProcessTraceQBitConfig(StandardProcessTraceQBitConfig standardProcessTraceQBitConfig)
    {
       this.standardProcessTraceQBitConfig = standardProcessTraceQBitConfig;
-      return (this);
-   }
-
-
-
-   /*******************************************************************************
-    ** Getter for tableMetaDataCustomizer
-    *******************************************************************************/
-   public MetaDataCustomizerInterface<QTableMetaData> getTableMetaDataCustomizer()
-   {
-      return (this.tableMetaDataCustomizer);
-   }
-
-
-
-   /*******************************************************************************
-    ** Setter for tableMetaDataCustomizer
-    *******************************************************************************/
-   public void setTableMetaDataCustomizer(MetaDataCustomizerInterface<QTableMetaData> tableMetaDataCustomizer)
-   {
-      this.tableMetaDataCustomizer = tableMetaDataCustomizer;
-   }
-
-
-
-   /*******************************************************************************
-    ** Fluent setter for tableMetaDataCustomizer
-    *******************************************************************************/
-   public StandardProcessTraceQBitProducer withTableMetaDataCustomizer(MetaDataCustomizerInterface<QTableMetaData> tableMetaDataCustomizer)
-   {
-      this.tableMetaDataCustomizer = tableMetaDataCustomizer;
       return (this);
    }
 

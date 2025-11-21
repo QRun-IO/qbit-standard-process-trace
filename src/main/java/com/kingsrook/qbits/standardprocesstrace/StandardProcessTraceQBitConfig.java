@@ -22,15 +22,24 @@
 package com.kingsrook.qbits.standardprocesstrace;
 
 
+import com.kingsrook.qqq.backend.core.model.metadata.producers.MetaDataCustomizerInterface;
+import com.kingsrook.qqq.backend.core.model.metadata.qbits.QBitConfig;
+import com.kingsrook.qqq.backend.core.model.metadata.tables.QTableMetaData;
+
+
 /*******************************************************************************
- ** ad-hoc Configuration data for this qbit.
- ** TODO - when qbit configs become formalized in qqq, adapt this qbit to that interface.
+ * Configuration data for this qbit.
+ *
  *******************************************************************************/
-public class StandardProcessTraceQBitConfig
+public class StandardProcessTraceQBitConfig implements QBitConfig
 {
+   private MetaDataCustomizerInterface<QTableMetaData> tableMetaDataCustomizer;
+
    private String userIdPossibleValueSourceName;
    private String userTableName;
    private String userIdReferenceFieldName;
+
+   private boolean includeBackendActivityStats = false;
 
 
 
@@ -121,6 +130,84 @@ public class StandardProcessTraceQBitConfig
    public StandardProcessTraceQBitConfig withUserIdPossibleValueSourceName(String userIdPossibleValueSourceName)
    {
       this.userIdPossibleValueSourceName = userIdPossibleValueSourceName;
+      return (this);
+   }
+
+
+
+   /*******************************************************************************
+    * Getter for includeBackendActivityStats
+    * @see #withIncludeBackendActivityStats(boolean)
+    *******************************************************************************/
+   public boolean getIncludeBackendActivityStats()
+   {
+      return (this.includeBackendActivityStats);
+   }
+
+
+
+   /*******************************************************************************
+    * Setter for includeBackendActivityStats
+    * @see #withIncludeBackendActivityStats(boolean)
+    *******************************************************************************/
+   public void setIncludeBackendActivityStats(boolean includeBackendActivityStats)
+   {
+      this.includeBackendActivityStats = includeBackendActivityStats;
+   }
+
+
+
+   /*******************************************************************************
+    * Fluent setter for includeBackendActivityStats
+    *
+    * @param includeBackendActivityStats
+    * indicate whether or not the ProcessTraceBackendActivityStats table should be
+    * included in the QInstance (and records should be built in that table under
+    * processTrace records).
+    * <p>Note that using this feature requires the QQQ QueryStatManager to be active
+    * in the application server.</p>
+    * @return this
+    *******************************************************************************/
+   public StandardProcessTraceQBitConfig withIncludeBackendActivityStats(boolean includeBackendActivityStats)
+   {
+      this.includeBackendActivityStats = includeBackendActivityStats;
+      return (this);
+   }
+
+
+
+   /*******************************************************************************
+    * Getter for tableMetaDataCustomizer
+    * @see #withTableMetaDataCustomizer(MetaDataCustomizerInterface)
+    *******************************************************************************/
+   public MetaDataCustomizerInterface<QTableMetaData> getTableMetaDataCustomizer()
+   {
+      return (this.tableMetaDataCustomizer);
+   }
+
+
+
+   /*******************************************************************************
+    * Setter for tableMetaDataCustomizer
+    * @see #withTableMetaDataCustomizer(MetaDataCustomizerInterface)
+    *******************************************************************************/
+   public void setTableMetaDataCustomizer(MetaDataCustomizerInterface<QTableMetaData> tableMetaDataCustomizer)
+   {
+      this.tableMetaDataCustomizer = tableMetaDataCustomizer;
+   }
+
+
+
+   /*******************************************************************************
+    * Fluent setter for tableMetaDataCustomizer
+    *
+    * @param tableMetaDataCustomizer
+    * table meta data customizer to be applied to all tables produced by this qbit.
+    * @return this
+    *******************************************************************************/
+   public StandardProcessTraceQBitConfig withTableMetaDataCustomizer(MetaDataCustomizerInterface<QTableMetaData> tableMetaDataCustomizer)
+   {
+      this.tableMetaDataCustomizer = tableMetaDataCustomizer;
       return (this);
    }
 
