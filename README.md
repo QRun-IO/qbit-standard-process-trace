@@ -24,7 +24,7 @@ This QBit provides automatic tracing for QQQ processes. Every execution is logge
 
 ### Prerequisites
 
-- QQQ application (v0.20+)
+- QQQ application (v0.35.0+)
 - Database backend configured
 
 ### Installation
@@ -33,9 +33,9 @@ Add to your `pom.xml`:
 
 ```xml
 <dependency>
-    <groupId>io.qrun</groupId>
+    <groupId>com.kingsrook.qbits</groupId>
     <artifactId>qbit-standard-process-trace</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
