@@ -13,8 +13,8 @@ Reviewed at commit `0f2ec0339048` (branch `develop`, 2026-07-04).
 Key facts worth knowing before editing:
 
 - `main` was merged back into `develop` for QRun-IO/qqq#766, so `develop` has main's
-  Java 21 + Apache-2.0 LICENSE/NOTICE and the backend-activity-stats feature. The pom
-  `<licenses>` and source headers still say AGPL; aligning them is a separate owner decision.
+  Java 21 + Apache-2.0 LICENSE/NOTICE and the backend-activity-stats feature. Current
+  first-party pom, source-header and README license declarations also use Apache-2.0.
 - The qqq version comes only from `qbit-build-parent` 2.0.0 (qqq 4.0.0); do not re-add a
   `qqq-bom-pom` import. `mvn -B verify -Pqqq-snapshot` checks against qqq `4.1.0-SNAPSHOT`
   (override with `-Dqqq.snapshot.version=...`).
