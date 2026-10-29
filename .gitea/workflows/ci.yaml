@@ -1,0 +1,7 @@
+name: Local java qualification
+on: [push, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  shared:
+    uses: self:KofTwentyTwo/platform-ci/.gitea/workflows/java.yaml@8a5496128ca03a04b203f4002bf77854a0eb2f54
