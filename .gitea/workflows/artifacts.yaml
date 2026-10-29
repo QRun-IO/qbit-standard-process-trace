@@ -1,0 +1,7 @@
+name: Local maven-artifacts qualification
+on: [workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  shared:
+    uses: self:KofTwentyTwo/platform-ci/.gitea/workflows/maven-artifact.yaml@d50f0064899ef10d0baa9a5b4bf0ed63a61a6d72
