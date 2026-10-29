@@ -4,4 +4,4 @@ permissions:
   contents: read
 jobs:
   shared:
-    uses: self:KofTwentyTwo/platform-ci/.gitea/workflows/maven-artifact.yaml@93f9650e6bf2af46bc410c5cdb7f6218fe97f9f3
+    uses: self:KofTwentyTwo/platform-ci/.gitea/workflows/maven-artifact.yaml@e3ace0802b92e5fbbe4feefafafde18d8a9f3986
