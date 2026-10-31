@@ -1,0 +1,11 @@
+name: Release candidate
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+permissions:
+  contents: read
+jobs:
+  candidate:
+    uses: self:KofTwentyTwo/platform-ci/.gitea/workflows/maven-release-candidate.yaml@f415ff8f0772e40b4ec89ce49d72e89e92efef53
