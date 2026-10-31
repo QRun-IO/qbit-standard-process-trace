@@ -99,7 +99,8 @@ class ProcessTraceBackendActivityStatsManagerTest
       long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
       while(System.nanoTime() < deadline)
       {
-         if(collectingLogger.getCollectedMessages().stream().anyMatch(clm -> clm.getMessage().contains("\"size\":0")))
+         var messages = collectingLogger.getCollectedMessages();
+         if(!messages.isEmpty() && messages.get(messages.size() - 1).getMessage().contains("\"size\":0"))
          {
             break;
          }
