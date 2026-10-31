@@ -94,7 +94,18 @@ class ProcessTraceBackendActivityStatsManagerTest
       manager.add(processTraceId, key, 1, 2, 3);
       manager.setCleanupIntervalMillis(5);
       manager.setCleanupMaxAge(20);
-      SleepUtils.sleep(50, TimeUnit.MILLISECONDS);
+      // Wait for the scheduled cleanup rather than assuming a shared CI runner
+      // will schedule the background thread within 50 milliseconds.
+      long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+      while(System.nanoTime() < deadline)
+      {
+         var messages = collectingLogger.getCollectedMessages();
+         if(!messages.isEmpty() && messages.get(messages.size() - 1).getMessage().contains("\"size\":0"))
+         {
+            break;
+         }
+         SleepUtils.sleep(5, TimeUnit.MILLISECONDS);
+      }
 
       QLogger.deactivateCollectingLoggerForClass(ProcessTraceBackendActivityStatsManager.class);
       assertThat(collectingLogger.getCollectedMessages()).anyMatch(clm -> clm.getMessage().contains("\"size\":1"));
