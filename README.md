@@ -24,7 +24,7 @@ This QBit provides automatic tracing for QQQ processes. Every execution is logge
 
 ### Prerequisites
 
-- QQQ application (v4.0.0+)
+- QQQ application (v4.1.0+)
 - Database backend configured
 
 ### Installation
